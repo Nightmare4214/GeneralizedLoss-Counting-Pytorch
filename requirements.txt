@@ -1,0 +1,5 @@
+pykeops
+matplotlib
+tensorboardX
+opencv-python
+scipy

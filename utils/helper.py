@@ -1,7 +1,9 @@
 import os
 
+
 class Save_Handle(object):
     """handle the number of """
+
     def __init__(self, max_num):
         self.save_list = []
         self.max_num = max_num
@@ -19,6 +21,7 @@ class Save_Handle(object):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 

@@ -1,14 +1,13 @@
+import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
-import torch
-import numpy as np
-from torchvision import models
 from torch.nn import functional as F
 
 __all__ = ['vgg19']
 model_urls = {
     'vgg19': 'https://download.pytorch.org/models/vgg19-dcbb9e9d.pth',
 }
+
 
 class VGG(nn.Module):
     def __init__(self, features, down=8, o_cn=1, final='abs'):
@@ -51,6 +50,7 @@ class VGG(nn.Module):
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
 
+
 def make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
     if dilation:
         d_rate = 2
@@ -63,7 +63,7 @@ def make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         else:
             # conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
-            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=d_rate,dilation = d_rate)
+            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=d_rate, dilation=d_rate)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
             else:
@@ -71,9 +71,10 @@ def make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
             in_channels = v
     return nn.Sequential(*layers)
 
+
 cfg = {
-    'C': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512],    
-    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512],    
+    'C': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512],
+    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512],
     'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512],
     'F': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512]
 }
@@ -86,5 +87,3 @@ def vgg19(down=8, bn=False, o_cn=1, final='abs'):
     model = VGG(make_layers(cfg['E'], batch_norm=False), down=down, o_cn=o_cn, final=final)
     model.load_state_dict(model_zoo.load_url(model_urls['vgg19']), strict=False)
     return model
-
-

@@ -1,16 +1,15 @@
-from PIL import Image
-import PIL
-import torch.utils.data as data
-import os
-import scipy.io as io
-from glob import glob
 import json
-import torch
-import torchvision.transforms.functional as F
-from torchvision import transforms
+import os
 import random
+from glob import glob
+
 import numpy as np
-import math
+import torch
+import torch.utils.data as data
+import torchvision.transforms.functional as F
+from PIL import Image
+from torchvision import transforms
+
 
 def random_crop(im_h, im_w, crop_h, crop_w):
     res_h = im_h - crop_h
@@ -25,8 +24,9 @@ def cal_innner_area(c_left, c_up, c_right, c_down, bbox):
     inner_up = np.maximum(c_up, bbox[:, 1])
     inner_right = np.minimum(c_right, bbox[:, 2])
     inner_down = np.minimum(c_down, bbox[:, 3])
-    inner_area = np.maximum(inner_right-inner_left, 0.0) * np.maximum(inner_down-inner_up, 0.0)
+    inner_area = np.maximum(inner_right - inner_left, 0.0) * np.maximum(inner_down - inner_up, 0.0)
     return inner_area
+
 
 def get_im_list(root_path, json_file):
     with open(json_file) as f:
@@ -34,12 +34,14 @@ def get_im_list(root_path, json_file):
     im_list = [os.path.join(root_path, x.split('/')[-1]) for x in im_list]
     return im_list
 
+
 def train_val(im_list, ratio=0.9):
-    N = int(float(len(im_list))*ratio)
+    N = int(float(len(im_list)) * ratio)
     idx = torch.randperm(len(im_list))
     train_list = [im_list[i] for i in idx[0:N]]
-    val_list = [im_list[i] for i in idx[N+1:]]
+    val_list = [im_list[i] for i in idx[N + 1:]]
     return train_list, val_list
+
 
 class Crowd(data.Dataset):
     def __init__(self, root_path, crop_size,
@@ -74,7 +76,7 @@ class Crowd(data.Dataset):
             ])
 
     def __len__(self):
-        return 1*len(self.im_list)
+        return 1 * len(self.im_list)
 
     def __getitem__(self, item):
         img_path = self.im_list[item % len(self.im_list)]
@@ -86,9 +88,9 @@ class Crowd(data.Dataset):
             return self.train_transform_with_crop(img, keypoints)
         elif self.method == 'val':
             img = self.trans(img)
-            name = os.path.basename(img_path).split('.')[0]
+            name = os.path.splitext(os.path.basename(img_path))[0]
             if len(keypoints) == 0:
-                keypoints = torch.zeros(size=(1,1))
+                keypoints = torch.zeros(size=(1, 1))
             return img, keypoints, name
 
     def train_transform_with_crop(self, img, keypoints):
@@ -106,13 +108,13 @@ class Crowd(data.Dataset):
             if random.random() > 0.5:
                 img = F.hflip(img)
             return self.trans(img), torch.from_numpy(keypoints.copy()).float(), \
-                    torch.from_numpy(keypoints.copy()).float(), st_size
+                torch.from_numpy(keypoints.copy()).float(), st_size
         nearest_dis = np.clip(keypoints[:, 2], 4.0, 128.0)
 
         points_left_up = keypoints[:, :2] - nearest_dis[:, None] / 2.0
         points_right_down = keypoints[:, :2] + nearest_dis[:, None] / 2.0
         bbox = np.concatenate((points_left_up, points_right_down), axis=1)
-        inner_area = cal_innner_area(j, i, j+w, i+h, bbox)
+        inner_area = cal_innner_area(j, i, j + w, i + h, bbox)
         origin_area = nearest_dis * nearest_dis
         ratio = np.clip(1.0 * inner_area / origin_area, 0.0, 1.0)
         mask = (ratio >= 0.3)
@@ -128,4 +130,4 @@ class Crowd(data.Dataset):
             if random.random() > 0.5:
                 img = F.hflip(img)
         return self.trans(img), torch.from_numpy(keypoints.copy()).float(), \
-               torch.from_numpy(target.copy()).float(), st_size
+            torch.from_numpy(target.copy()).float(), st_size

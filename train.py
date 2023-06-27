@@ -1,14 +1,16 @@
-from utils.emd_dot_trainer import EMDTrainer 
+from utils.emd_dot_trainer import EMDTrainer
 import argparse
 import os
 import torch
+
 args = None
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train ')
-    parser.add_argument('--save-dir', default='../checkpoints/temp',
+    parser.add_argument('--save_dir', default='/mnt/data/PyTorch_model/GL',
                         help='directory to save models.')
-    parser.add_argument('--data-dir', default='../../data/UCF_Bayes',
+    parser.add_argument('--data_dir', default='/mnt/data/datasets/UCF-Train-Val-Test',
                         help='training data directory')
     parser.add_argument('--o_cn', type=int, default=1,
                         help='outpu channel number')
@@ -31,33 +33,32 @@ def parse_args():
     parser.add_argument('--d_pixel', type=str, default='l2',
                         help='divergence for pixel loss')
 
-
     parser.add_argument('--lr', type=float, default=1e-5,
                         help='the initial learning rate')
-    parser.add_argument('--weight-decay', type=float, default=1e-5,
+    parser.add_argument('--weight_decay', type=float, default=1e-5,
                         help='the weight decay')
     parser.add_argument('--resume', default='',
                         help='the path of resume training model')
-    parser.add_argument('--max-model-num', type=int, default=1,
+    parser.add_argument('--max_model_num', type=int, default=1,
                         help='max models num to save ')
-    parser.add_argument('--max-epoch', type=int, default=500,
+    parser.add_argument('--max_epoch', type=int, default=500,
                         help='max training epoch')
-    parser.add_argument('--val-epoch', type=int, default=5,
+    parser.add_argument('--val_epoch', type=int, default=5,
                         help='the num of steps to log training information')
-    parser.add_argument('--val-start', type=int, default=10,
+    parser.add_argument('--val_start', type=int, default=10,
                         help='the epoch start to val')
 
-    parser.add_argument('--batch-size', type=int, default=1,
+    parser.add_argument('--batch_size', type=int, default=1,
                         help='train batch size')
     parser.add_argument('--device', default='0', help='assign device')
-    parser.add_argument('--num-workers', type=int, default=8,
+    parser.add_argument('--num_workers', type=int, default=8,
                         help='the num of training process')
 
-    parser.add_argument('--is-gray', type=bool, default=False,
+    parser.add_argument('--is_gray', type=bool, default=False,
                         help='whether the input image is gray')
-    parser.add_argument('--crop-size', type=int, default=512,
+    parser.add_argument('--crop_size', type=int, default=512,
                         help='the crop size of the train image')
-    parser.add_argument('--downsample-ratio', type=int, default=8,
+    parser.add_argument('--downsample_ratio', type=int, default=8,
                         help='downsample ratio')
 
     args = parser.parse_args()
