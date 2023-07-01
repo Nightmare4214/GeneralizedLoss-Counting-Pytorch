@@ -13,11 +13,11 @@ def parse_args():
     parser.add_argument('--data_dir', default='/mnt/data/datasets/UCF-Train-Val-Test',
                         help='training data directory')
     parser.add_argument('--o_cn', type=int, default=1,
-                        help='outpu channel number')
-    parser.add_argument('--cost', type=str, default='per',
+                        help='output channel number')
+    parser.add_argument('--cost', type=str, default='exp',
                         help='cost distance')
     parser.add_argument('--scale', type=float, default=0.6,
-                        help='scale for coordinates')
+                        help='scale for coordinates')  # perspective-guided cost
     parser.add_argument('--reach', type=float, default=0.5,
                         help='reach')
     parser.add_argument('--blur', type=float, default=0.01,
@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--tau', type=float, default=0.1,
                         help='blur')
     parser.add_argument('--p', type=float, default=1,
-                        help='p')
+                        help='p')  # ?
     parser.add_argument('--d_point', type=str, default='l1',
                         help='divergence for point loss')
     parser.add_argument('--d_pixel', type=str, default='l2',

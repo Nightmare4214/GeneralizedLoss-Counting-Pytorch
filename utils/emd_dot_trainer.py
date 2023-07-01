@@ -39,7 +39,7 @@ def per_cost(X, Y):
     C = torch.sqrt(C)
     s = (x_col[:, :, :, -1] + y_lin[:, :, :, -1]) / 2
     s = s * 0.2 + 0.5
-    return (torch.exp(C / s) - 1)
+    return torch.exp(C / s) - 1
 
 
 def exp_cost(X, Y):
@@ -47,7 +47,7 @@ def exp_cost(X, Y):
     y_lin = Y.unsqueeze(-3)
     C = torch.sum((torch.abs(x_col - y_lin)) ** 2, -1)
     C = torch.sqrt(C)
-    return (torch.exp(C / scale) - 1.)
+    return torch.exp(C / scale) - 1.
 
 
 def train_collate(batch):
@@ -164,8 +164,8 @@ class EMDTrainer(Trainer):
             outputs = self.model(inputs)
 
             cood_grid = grid(outputs.shape[2], outputs.shape[3], 1).unsqueeze(0) * self.args.downsample_ratio + (
-                        self.args.downsample_ratio / 2)
-            cood_grid = cood_grid.type(torch.cuda.FloatTensor) / float(self.args.crop_size)
+                    self.args.downsample_ratio / 2)
+            cood_grid = cood_grid.type(torch.cuda.FloatTensor) / float(self.args.crop_size)  # (0, 1)
             i = 0
             emd_loss = 0
             point_loss = 0
