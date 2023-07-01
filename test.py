@@ -2,12 +2,16 @@ import torch
 import os
 import numpy as np
 from tqdm import tqdm
+from cv2 import cv2
+import torch.nn.functional as F
 
 from datasets.crowd import Crowd
 from models.vgg import vgg19
 import argparse
 
 args = None
+th = 0.05
+locate = True
 
 
 def train_collate(batch):
@@ -27,6 +31,7 @@ def parse_args():
                         default='/mnt/data/PycharmProject/GeneralizedLoss-Counting-Pytorch/ucf_vgg19_ot_84.pth',
                         help='model path')
     parser.add_argument('--device', default='0', help='assign device')
+    parser.add_argument('--locate', default=False, required=False, action='store_true', help='locate crowd')
     args = parser.parse_args()
     return args
 
@@ -43,7 +48,13 @@ if __name__ == '__main__':
     model = model.to(device)
     model.load_state_dict(torch.load(os.path.join(args.save_dir), device))
     epoch_minus = []
+
+    if args.locate:
+        locate_dir = os.path.join(os.path.dirname(args.save_dir), 'predict')
+        os.makedirs(locate_dir, exist_ok=True)
+
     with torch.no_grad():
+        model.eval()
         for inputs, count, name in tqdm(dataloader):
             inputs = inputs.to(device)
             assert inputs.size(0) == 1, 'the batch size should equal to 1'
@@ -51,6 +62,21 @@ if __name__ == '__main__':
             temp_minu = len(count[0]) - torch.sum(outputs).item()
             # print(name, temp_minu, len(count[0]), torch.sum(outputs).item())
             epoch_minus.append(temp_minu)
+
+            if args.locate:
+                name = name[0] + '.jpg'
+
+                prob_outputs = F.interpolate(outputs, scale_factor=8, mode='bilinear')
+                maxpool_output = F.max_pool2d(prob_outputs, 3, 1, 1)
+                maxpool_output = torch.eq(maxpool_output, prob_outputs)
+                maxpool_output = maxpool_output * prob_outputs
+                maxpool_output = maxpool_output.squeeze().detach().cpu().numpy()
+                maxpool_output[maxpool_output < th] = 0
+                y, x = maxpool_output.nonzero()
+                img = cv2.imread(os.path.join(args.data_dir, 'test', name))
+                for i, j in zip(y, x):
+                    img = cv2.circle(img, (j, i), 3, (0, 0, 255), thickness=-1, lineType=cv2.LINE_AA)
+                cv2.imwrite(os.path.join(locate_dir, name), img)
 
     epoch_minus = np.array(epoch_minus)
     mse = np.sqrt(np.mean(np.square(epoch_minus)))
