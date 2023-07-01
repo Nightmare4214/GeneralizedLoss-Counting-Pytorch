@@ -30,11 +30,14 @@ python train.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT
 
 ## Reproduction
 
---cost per --scale 0.6 --reach 0.5 --blur 0.01 --scaling 0.5 --tau 0.1 --p 1: Final Test: mae 90.85878733103861, mse 164.81297964468203  
---cost exp --scale 0.6 --reach 0.5 --blur 0.01 --scaling 0.5 --tau 0.1 --p 1: Final Test: mae 85.69232401590861, mse 155.30853159819492  
---cost exp --scale 0.6 --reach 0.5 --blur 0.005 --scaling 0.5 --tau 0.5 --p 1: Final Test: mae 94.7432665111062, mse 169.12924529962544  
---cost exp --scale 0.6 --reach 0.5 --blur 0.01 --scaling 0.5 --tau 0.5 --p 1: Final Test: mae 90.37459440859492, mse 160.29078877178213  
---cost exp --scale 0.6 --reach 0.5 --blur 0.005 --scaling 0.5 --tau 0.1 --p 1: Final Test: mae 92.81271439969183, mse 172.55166210599293
+| cost | scale | reach | blur  | scaling | tau | p | mae  | mse  |
+|------|-------|-------|-------|---------|-----|---| ---- | ---- |
+| per  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 90.85878733103861     | 164.81297964468203     |
+| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 85.69232401590861     | 155.30853159819492     |
+| exp  | 0.6   | 0.5   | 0.005 | 0.5     | 0.5 | 1 | 94.7432665111062     |  169.12924529962544    |
+| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.5 | 1 | 90.37459440859492     | 160.29078877178213     |
+| exp  | 0.6   | 0.5   | 0.005 | 0.5     | 0.1 | 1 | 92.81271439969183     | 172.55166210599293     |
+
 
 ### Citation
 If you use our code or models in your research, please cite with:
