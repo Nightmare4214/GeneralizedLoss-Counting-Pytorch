@@ -1,7 +1,9 @@
-from utils.emd_dot_trainer import EMDTrainer
 import argparse
 import os
+
 import torch
+
+from utils.emd_dot_trainer import EMDTrainer
 
 args = None
 

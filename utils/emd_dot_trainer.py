@@ -1,23 +1,22 @@
-import matplotlib
-from tqdm import tqdm
-
-matplotlib.use('Agg')
-from utils.trainer import Trainer
-from utils.helper import Save_Handle, AverageMeter
+import inspect
+import logging
 import os
 import time
+
+import numpy as np
 import torch
 from tensorboardX import SummaryWriter
+from timm.utils import AverageMeter
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
-import logging
-import numpy as np
+from tqdm import tqdm
 
-from models.vgg import vgg19
 from datasets.crowd import Crowd
 from geomloss import SamplesLoss
-import inspect
+from models.vgg import vgg19
+from utils.helper import Save_Handle
+from utils.trainer import Trainer
 
 print(inspect.getfile(SamplesLoss))
 
@@ -26,16 +25,16 @@ dtype = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
 
 def grid(H, W, stride):
-    coodx = torch.arange(0, W, step=stride) + stride / 2
-    coody = torch.arange(0, H, step=stride) + stride / 2
-    y, x = torch.meshgrid([coody.type(dtype) / 1, coodx.type(dtype) / 1], indexing='ij')
-    return torch.stack((x, y), dim=2).view(-1, 2)
+    coodx = torch.arange(0, W, step=stride) + stride / 2  # [0, w)
+    coody = torch.arange(0, H, step=stride) + stride / 2  # [0, h)
+    y, x = torch.meshgrid([coody.type(dtype) / 1, coodx.type(dtype) / 1], indexing='ij')  # (h_i, w_i)
+    return torch.stack((x, y), dim=2).view(-1, 2)  # (w_i, h_i)
 
 
 def per_cost(X, Y):
     x_col = X.unsqueeze(-2)
     y_lin = Y.unsqueeze(-3)
-    C = torch.sum((torch.abs(x_col - y_lin)) ** 2, -1)
+    C = torch.sum((x_col - y_lin) ** 2, -1)
     C = torch.sqrt(C)
     s = (x_col[:, :, :, -1] + y_lin[:, :, :, -1]) / 2
     s = s * 0.2 + 0.5
@@ -45,7 +44,7 @@ def per_cost(X, Y):
 def exp_cost(X, Y):
     x_col = X.unsqueeze(-2)
     y_lin = Y.unsqueeze(-3)
-    C = torch.sum((torch.abs(x_col - y_lin)) ** 2, -1)
+    C = torch.sum((x_col - y_lin) ** 2, -1)
     C = torch.sqrt(C)
     return torch.exp(C / scale) - 1.
 
@@ -145,7 +144,7 @@ class EMDTrainer(Trainer):
         epoch_mse = AverageMeter()
         epoch_start = time.time()
         self.model.train()  # Set model to training mode
-        shape = (1, int(512 / self.args.downsample_ratio), int(512 / self.args.downsample_ratio))
+        # shape = (1, int(512 / self.args.downsample_ratio), int(512 / self.args.downsample_ratio))
 
         if epoch < 10:
             for param_group in self.optimizer.param_groups:
@@ -155,7 +154,7 @@ class EMDTrainer(Trainer):
         for step, (inputs, points, targets, st_sizes) in enumerate(tqdm(self.dataloaders['train'])):
             inputs = inputs.to(self.device)
             # st_sizes = st_sizes.to(self.device)
-            gd_count = np.array([len(p) for p in points], dtype=np.float32)
+            gd_count = np.array([p.shape[0] for p in points], dtype=np.float32)
             points = [p.to(self.device) for p in points]
             # targets = [t.to(self.device) for t in targets]
             shape = (inputs.shape[0], int(inputs.shape[2] / self.args.downsample_ratio),
@@ -171,25 +170,25 @@ class EMDTrainer(Trainer):
             point_loss = 0
             pixel_loss = 0
             entropy = 0
-            for p in points:
-                if len(p) < 1:
+            for p in points:  # (0, crop_size)
+                if p.shape[0] < 1:
                     gt = torch.zeros((1, shape[1], shape[2])).cuda()
                     point_loss += torch.abs(gt.sum() - outputs[i].sum()) / shape[0]
                     pixel_loss += torch.abs(gt.sum() - outputs[i].sum()) / shape[0]
                     emd_loss += torch.abs(gt.sum() - outputs[i].sum()) / shape[0]
                 else:
-                    gt = torch.ones((1, len(p), 1)).cuda()
+                    gt = torch.ones((1, p.shape[0], 1)).cuda()
                     cood_points = p.reshape(1, -1, 2) / float(self.args.crop_size)
                     A = outputs[i].reshape(1, -1, 1)
-                    l, F, G = self.criterion(A, cood_grid, gt, cood_points)
+                    l, F, G = self.criterion(A, cood_grid, gt, cood_points)  # l (1,) F(1, 4096, 1), G(1, 26, 1)
 
                     C = self.cost(cood_grid, cood_points)
                     PI = torch.exp((F.repeat(1, 1, C.shape[2]) + G.permute(0, 2, 1).repeat(1, C.shape[1],
                                                                                            1) - C).detach() / self.args.blur ** self.args.p) * A * gt.permute(
                         0, 2, 1)
                     entropy += torch.mean((1e-20 + PI) * torch.log(1e-20 + PI))
-                    AE = PI
-                    AE = AE.sum(1).reshape(1, -1, 1)
+                    # AE = PI
+                    # AE = AE.sum(1).reshape(1, -1, 1)
                     emd_loss += (torch.mean(l) / shape[0])
                     if self.args.d_point == 'l1':
                         point_loss += torch.sum(torch.abs(PI.sum(1).reshape(1, -1, 1) - gt)) / shape[0]
@@ -218,7 +217,7 @@ class EMDTrainer(Trainer):
             epoch_mae.update(np.mean(abs(res)), N)
 
         logging.info('Epoch {} Train, Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
-                     .format(self.epoch, epoch_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(),
+                     .format(self.epoch, epoch_loss.avg, np.sqrt(epoch_mse.avg), epoch_mae.avg,
                              time.time() - epoch_start))
         model_state_dic = self.model.state_dict()
         save_path = os.path.join(self.save_dir, '{}_ckpt.tar'.format(self.epoch))
@@ -244,8 +243,10 @@ class EMDTrainer(Trainer):
                 # inputs are images with different sizes
                 assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
                 outputs = self.model(inputs)
-                points = points[0].type(torch.LongTensor)
-                res = len(points) - torch.sum(outputs).item()
+
+                # points = points[0].type(torch.LongTensor)
+                # res = len(points) - torch.sum(outputs).item()
+                res = points.shape[1] - torch.sum(outputs).item()
                 epoch_res.append(res)
 
         epoch_res = np.array(epoch_res)

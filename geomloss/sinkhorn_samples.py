@@ -43,7 +43,7 @@ def sinkhorn_tensorized(α, x, β, y, p=2, blur=.05, reach=None, diameter=None, 
         cost = cost_routines[p]
 
     C_xx, C_yy = (cost(x, x.detach()), cost(y, y.detach())) if debias else (None, None)  # (B,N,N), (B,M,M)
-    C_xy, C_yx = (cost(x, y.detach()), cost(y, x.detach()))  # (B,N,M), (B,M,N)
+    C_xy, C_yx = (cost(x, y.detach()), cost(y, x.detach()))  # (B,N,M), (B,M,N), C, C^T
 
     diameter, ε, ε_s, ρ = scaling_parameters(x, y, p, blur, reach, diameter, scaling)
 

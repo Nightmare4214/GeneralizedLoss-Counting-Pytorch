@@ -1,6 +1,7 @@
 import torch
 import os
 import numpy as np
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 from cv2 import cv2
 import torch.nn.functional as F
@@ -14,13 +15,13 @@ th = 0.05
 locate = True
 
 
-def train_collate(batch):
-    transposed_batch = list(zip(*batch))
-    images = torch.stack(transposed_batch[0], 0)
-    points = transposed_batch[1]  # the number of points is not fixed, keep it as a list of tensor
-    targets = transposed_batch[2]
-    st_sizes = torch.FloatTensor(transposed_batch[3])
-    return images, points, targets, st_sizes
+# def train_collate(batch):
+#     transposed_batch = list(zip(*batch))
+#     images = torch.stack(transposed_batch[0], 0)
+#     points = transposed_batch[1]  # the number of points is not fixed, keep it as a list of tensor
+#     targets = transposed_batch[2]
+#     st_sizes = torch.FloatTensor(transposed_batch[3])
+#     return images, points, targets, st_sizes
 
 
 def parse_args():
@@ -59,7 +60,9 @@ if __name__ == '__main__':
             inputs = inputs.to(device)
             assert inputs.size(0) == 1, 'the batch size should equal to 1'
             outputs = model(inputs)
-            temp_minu = len(count[0]) - torch.sum(outputs).item()
+            # plt.imshow(outputs.squeeze().cpu(), cmap='jet')
+            # plt.show()
+            temp_minu = count.shape[1] - torch.sum(outputs).item()
             # print(name, temp_minu, len(count[0]), torch.sum(outputs).item())
             epoch_minus.append(temp_minu)
 

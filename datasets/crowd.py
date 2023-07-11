@@ -60,9 +60,9 @@ class Crowd(data.Dataset):
         self.method = method
 
         self.c_size = crop_size
-        self.d_ratio = downsample_ratio
-        assert self.c_size % self.d_ratio == 0
-        self.dc_size = self.c_size // self.d_ratio
+        # self.d_ratio = downsample_ratio
+        # assert self.c_size % self.d_ratio == 0
+        # self.dc_size = self.c_size // self.d_ratio
 
         if is_gray:
             self.trans = transforms.Compose([

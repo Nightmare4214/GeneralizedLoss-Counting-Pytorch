@@ -106,7 +106,7 @@ def sinkhorn_cost(ε, ρ, α, β, a_x, b_y, a_y, b_x, batch=False, debias=True, 
         else:
             return b_x, a_y
 
-    else:  # Actually compute the Sinkhorn divergence
+    else:  # Actually compute the Sinkhorn divergence g=a_y, f=b_x
         if debias:  # UNBIASED Sinkhorn divergence, S_ε(α,β) = OT_ε(α,β) - .5*OT_ε(α,α) - .5*OT_ε(β,β)
             if ρ is None:
                 return scal(α, b_x - a_x, batch=batch) + scal(β, a_y - b_y, batch=batch), b_x, a_y
@@ -130,12 +130,12 @@ def sinkhorn_loop(softmin, α_logs, β_logs, C_xxs, C_yys, C_xys, C_yxs, ε_s, �
         α_logs, β_logs = [α_logs], [β_logs]
         if debias:
             C_xxs, C_yys = [C_xxs], [C_yys]
-        C_xys, C_yxs = [C_xys], [C_yxs]
+        C_xys, C_yxs = [C_xys], [C_yxs] # [C], [C^T]
 
     torch.autograd.set_grad_enabled(False)
 
     k = 0  # Scale index; we start at the coarsest resolution available
-    ε = ε_s[k];
+    ε = ε_s[k]
     λ = dampening(ε, ρ)
 
     # Load the measures and cost matrices at the current scale:
@@ -150,8 +150,8 @@ def sinkhorn_loop(softmin, α_logs, β_logs, C_xxs, C_yys, C_xys, C_yxs, ε_s, �
         b_y = λ * softmin(ε, C_yy, β_log)  # OT(β,β)
     # a_y = λ * softmin(ε, C_yx, -β_log )  # OT(α,β) wrt. a
     # b_x = λ * softmin(ε, C_xy, -α_log )  # OT(α,β) wrt. b
-    a_y = λ * softmin(ε, C_yx, α_log)  # OT(α,β) wrt. a
-    b_x = λ * softmin(ε, C_xy, β_log)  # OT(α,β) wrt. b
+    a_y = λ * softmin(ε, C_yx, α_log)  # OT(α,β) wrt. a =>g = a_y
+    b_x = λ * softmin(ε, C_xy, β_log)  # OT(α,β) wrt. b =>f = b_x
 
     # print(len(ε_s))
     for i, ε in enumerate(ε_s):  # ε-scaling descent -----------------------
