@@ -15,6 +15,7 @@ from tqdm import tqdm
 from datasets.crowd import Crowd
 from geomloss import SamplesLoss
 from models.vgg import vgg19
+from utils.cost_functions import ExpCost, PerCost, L2_DIS, PNormCost
 from utils.helper import Save_Handle
 from utils.trainer import Trainer
 
@@ -29,24 +30,6 @@ def grid(H, W, stride):
     coody = torch.arange(0, H, step=stride) + stride / 2  # [0, h)
     y, x = torch.meshgrid([coody.type(dtype) / 1, coodx.type(dtype) / 1], indexing='ij')  # (h_i, w_i)
     return torch.stack((x, y), dim=2).view(-1, 2)  # (w_i, h_i)
-
-
-def per_cost(X, Y):
-    x_col = X.unsqueeze(-2)
-    y_lin = Y.unsqueeze(-3)
-    C = torch.sum((x_col - y_lin) ** 2, -1)
-    C = torch.sqrt(C)
-    s = (x_col[:, :, :, -1] + y_lin[:, :, :, -1]) / 2
-    s = s * 0.2 + 0.5
-    return torch.exp(C / s) - 1
-
-
-def exp_cost(X, Y):
-    x_col = X.unsqueeze(-2)
-    y_lin = Y.unsqueeze(-3)
-    C = torch.sum((x_col - y_lin) ** 2, -1)
-    C = torch.sqrt(C)
-    return torch.exp(C / scale) - 1.
 
 
 def train_collate(batch):
@@ -65,9 +48,14 @@ class EMDTrainer(Trainer):
         global scale
         scale = args.scale
         if args.cost == 'exp':
-            self.cost = exp_cost
+            self.cost = ExpCost(args.scale)
         elif args.cost == 'per':
-            self.cost = per_cost
+            self.cost = PerCost()
+        elif args.cost == 'l2':
+            self.cost = L2_DIS()
+        elif args.cost == 'p_norm':
+            self.cost = PNormCost(args.p_norm)
+
 
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
@@ -162,9 +150,6 @@ class EMDTrainer(Trainer):
 
             outputs = self.model(inputs)
 
-            cood_grid = grid(outputs.shape[2], outputs.shape[3], 1).unsqueeze(0) * self.args.downsample_ratio + (
-                    self.args.downsample_ratio / 2)
-            cood_grid = cood_grid.type(torch.cuda.FloatTensor) / float(self.args.crop_size)  # (0, 1)
             i = 0
             emd_loss = 0
             point_loss = 0
@@ -177,6 +162,10 @@ class EMDTrainer(Trainer):
                     pixel_loss += torch.abs(gt.sum() - outputs[i].sum()) / shape[0]
                     emd_loss += torch.abs(gt.sum() - outputs[i].sum()) / shape[0]
                 else:
+                    cood_grid = grid(outputs.shape[2], outputs.shape[3], 1).unsqueeze(
+                        0) * self.args.downsample_ratio + (
+                                        self.args.downsample_ratio / 2)
+                    cood_grid = cood_grid.type(torch.cuda.FloatTensor) / float(self.args.crop_size)  # (0, 1)
                     gt = torch.ones((1, p.shape[0], 1)).cuda()
                     cood_points = p.reshape(1, -1, 2) / float(self.args.crop_size)
                     A = outputs[i].reshape(1, -1, 1)

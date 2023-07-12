@@ -30,6 +30,8 @@ def parse_args():
                         help='blur')
     parser.add_argument('--p', type=float, default=1,
                         help='p')  # ?
+    parser.add_argument('--p_norm', type=float, default=2,
+                        help='p_norm')  # ?
     parser.add_argument('--d_point', type=str, default='l1',
                         help='divergence for point loss')
     parser.add_argument('--d_pixel', type=str, default='l2',
