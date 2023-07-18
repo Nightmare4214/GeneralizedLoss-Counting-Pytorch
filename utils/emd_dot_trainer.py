@@ -125,6 +125,7 @@ class EMDTrainer(Trainer):
             self.train_epoch(epoch)
             if epoch % args.val_epoch == 0 and epoch >= args.val_start:
                 self.val_epoch(stage='val')
+        self.val_epoch(stage='val')
 
     def train_epoch(self, epoch=0):
         epoch_loss = AverageMeter()
@@ -204,7 +205,9 @@ class EMDTrainer(Trainer):
             epoch_loss.update(loss.item(), N)
             epoch_mse.update(np.mean(res * res), N)
             epoch_mae.update(np.mean(abs(res)), N)
-
+        self.writer.add_scalar('train/loss', epoch_loss.avg, self.epoch)
+        self.writer.add_scalar('train/mae', epoch_mae.avg, self.epoch)
+        self.writer.add_scalar('train/mse', np.sqrt(epoch_mse.avg), self.epoch)
         logging.info('Epoch {} Train, Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
                      .format(self.epoch, epoch_loss.avg, np.sqrt(epoch_mse.avg), epoch_mae.avg,
                              time.time() - epoch_start))
