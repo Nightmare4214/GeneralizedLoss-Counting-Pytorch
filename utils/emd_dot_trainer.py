@@ -8,11 +8,12 @@ import torch
 from tensorboardX import SummaryWriter
 from timm.utils import AverageMeter
 from torch import optim
+from torch.optim.lr_scheduler import LinearLR, PolynomialLR
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
 
-from datasets.crowd import Crowd
+from datasets.crowd import Crowd, Crowd_sh
 from geomloss import SamplesLoss
 from models.vgg import vgg19
 from utils.cost_functions import ExpCost, PerCost, L2_DIS, PNormCost
@@ -67,11 +68,20 @@ class EMDTrainer(Trainer):
             raise Exception("gpu is not available")
 
         self.downsample_ratio = args.downsample_ratio
-        self.datasets = {x: Crowd(os.path.join(args.data_dir, x),
-                                  args.crop_size,
-                                  args.downsample_ratio,
-                                  args.is_gray, x
-                                  ) for x in ['train', 'val']}
+        if args.dataset == 'qnrf':
+            self.datasets = {x: Crowd(os.path.join(args.data_dir, x),
+                                      args.crop_size,
+                                      args.downsample_ratio,
+                                      args.is_gray, x
+                                      ) for x in ['train', 'val']}
+        elif args.dataset in ['sha', 'shb']:
+            self.datasets = {x: Crowd_sh(os.path.join(args.data_dir, x),
+                                         args.crop_size,
+                                         args.downsample_ratio,
+                                         x
+                                         ) for x in ['train', 'val']}
+        else:
+            raise NotImplementedError
         self.dataloaders = {x: DataLoader(self.datasets[x],
                                           collate_fn=(train_collate
                                                       if x == 'train' else default_collate),
@@ -86,7 +96,8 @@ class EMDTrainer(Trainer):
 
         self.model.to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-
+        self.scheduler = LinearLR(self.optimizer, start_factor=0.1, total_iters=10)
+        # self.scheduler = PolynomialLR(self.optimizer, total_iters=args.max_epoch, power=0.9)
         self.start_epoch = 0
         if args.resume:
             suf = os.path.splitext(args.resume)[-1]
@@ -135,10 +146,10 @@ class EMDTrainer(Trainer):
         self.model.train()  # Set model to training mode
         # shape = (1, int(512 / self.args.downsample_ratio), int(512 / self.args.downsample_ratio))
 
-        if epoch < 10:
-            for param_group in self.optimizer.param_groups:
-                if param_group['lr'] >= 0.1 * self.args.lr:
-                    param_group['lr'] = self.args.lr * (epoch + 1) / 10
+        # if epoch < 10:
+        #     for param_group in self.optimizer.param_groups:
+        #         if param_group['lr'] >= 0.1 * self.args.lr:
+        #             param_group['lr'] = self.args.lr * (epoch + 1) / 10
         print('learning rate: {}, batch size: {}'.format(self.optimizer.param_groups[0]['lr'], self.args.batch_size))
         for step, (inputs, points, targets, st_sizes) in enumerate(tqdm(self.dataloaders['train'])):
             inputs = inputs.to(self.device)
@@ -200,11 +211,13 @@ class EMDTrainer(Trainer):
             outputs = torch.mean(outputs, dim=1)
             pre_count = torch.sum(outputs[-1]).detach().cpu().numpy()
             res = (pre_count - gd_count[-1])  # gd_count
-            if step % 200 == 0:
-                print(res, pre_count, gd_count[-1], point_loss.item(), pixel_loss.item(), loss.item())
+            # if step % 200 == 0:
+            #     print(res, pre_count, gd_count[-1], point_loss.item(), pixel_loss.item(), loss.item())
             epoch_loss.update(loss.item(), N)
             epoch_mse.update(np.mean(res * res), N)
             epoch_mae.update(np.mean(abs(res)), N)
+        self.scheduler.step()
+        # self.scheduler.step(epoch)
         self.writer.add_scalar('train/loss', epoch_loss.avg, self.epoch)
         self.writer.add_scalar('train/mae', epoch_mae.avg, self.epoch)
         self.writer.add_scalar('train/mse', np.sqrt(epoch_mse.avg), self.epoch)
