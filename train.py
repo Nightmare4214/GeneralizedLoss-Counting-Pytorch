@@ -42,10 +42,10 @@ def parse_args():
 
     parser.add_argument('--lr', type=float, default=1e-5,
                         help='the initial learning rate')
-    parser.add_argument('--lr_lbfgs', type=float, default=1,
-                        help='the learning rate for lbfgs')
     parser.add_argument('--weight_decay', type=float, default=1e-5,
                         help='the weight decay')
+    parser.add_argument('--scheduler', type=str, default='poly',
+                        help='scheduler')
     parser.add_argument('--resume', default='',
                         help='the path of resume training model')
     parser.add_argument('--max_model_num', type=int, default=1,

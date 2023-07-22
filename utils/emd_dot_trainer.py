@@ -96,8 +96,12 @@ class EMDTrainer(Trainer):
 
         self.model.to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        self.scheduler = LinearLR(self.optimizer, start_factor=0.1, total_iters=10)
-        # self.scheduler = PolynomialLR(self.optimizer, total_iters=args.max_epoch, power=0.9)
+        if args.scheduler.lower() == 'linear':
+            self.scheduler = LinearLR(self.optimizer, start_factor=0.1, total_iters=10)
+        elif args.scheduler.lower() == 'poly':
+            self.scheduler = PolynomialLR(self.optimizer, total_iters=args.max_epoch, power=0.9)
+        else:
+            self.scheduler = None
         self.start_epoch = 0
         if args.resume:
             suf = os.path.splitext(args.resume)[-1]
@@ -216,8 +220,9 @@ class EMDTrainer(Trainer):
             epoch_loss.update(loss.item(), N)
             epoch_mse.update(np.mean(res * res), N)
             epoch_mae.update(np.mean(abs(res)), N)
-        self.scheduler.step()
-        # self.scheduler.step(epoch)
+        
+        if self.scheduler is not None:
+            self.scheduler.step()
         self.writer.add_scalar('train/loss', epoch_loss.avg, self.epoch)
         self.writer.add_scalar('train/mae', epoch_mae.avg, self.epoch)
         self.writer.add_scalar('train/mse', np.sqrt(epoch_mse.avg), self.epoch)

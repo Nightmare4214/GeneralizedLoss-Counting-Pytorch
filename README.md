@@ -6,7 +6,7 @@ Dowload Dataset UCF-QNRF [Link](https://www.crcv.ucf.edu/data/ucf-qnrf/)
 
 ## Data preparation
 
-```
+```bash
 python preprocess_dataset.py --origin_dir PATH_TO_ORIGIN_DATASET --data_dir PATH_TO_DATASET
 ```
 [//]: # (The dataset can be constructed followed by [Bayesian Loss]&#40;https://github.com/ZhihengCV/Bayesian-Crowd-Counting&#41;.)
@@ -18,17 +18,21 @@ Final Test: mae 85.09911092883813, mse 150.88815648865386
 paper:  mae 84.3, mse 147.5  
 ## Test
 
-```
+```bash
 python test.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT
 ```
 
 ## Train
 
-```
+```bash
 python train.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT
 ```
 
 ## Reproduction
+
+### UCF-QNRF
+
+mae: 84.3, mse: 147.5
 
 | cost | scale | reach | blur  | scaling | tau | p | mae  | mse  |
 |------|-------|-------|-------|---------|-----|---| ---- | ---- |
@@ -38,6 +42,22 @@ python train.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT
 | exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.5 | 1 | 90.37459440859492     | 160.29078877178213     |
 | exp  | 0.6   | 0.5   | 0.005 | 0.5     | 0.1 | 1 | 92.81271439969183     | 172.55166210599293     |
 
+### Shanghai-A
+
+mae: 61.3, mse: 95.4
+
+| cost | scale | reach | blur  | scaling | tau | p | mae  | mse  |
+|------|-------|-------|-------|---------|-----|---| ---- | ---- |
+| L2  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 73.4685192317753     | 108.96970748752973     |
+| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 70.68456897106799     | 116.33845423958215     |
+
+### Shanghai-B
+
+mae: 7.3, mse: 11.7
+
+| cost | scale | reach | blur  | scaling | tau | p | mae  | mse  |
+|------|-------|-------|-------|---------|-----|---| ---- | ---- |
+| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 8.174663287174853    | 13.731827122355636     |
 
 ### Citation
 If you use our code or models in your research, please cite with:
