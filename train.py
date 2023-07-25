@@ -10,7 +10,7 @@ args = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train ')
-    parser.add_argument('--save_dir', default='/mnt/data/PyTorch_model/GL_semi',
+    parser.add_argument('--save_dir', default='/mnt/data/PyTorch_model/GL',
                         help='directory to save models.')
     parser.add_argument('--data_dir', default='/mnt/data/datasets/UCF-Train-Val-Test',
                         help='training data directory')
@@ -92,3 +92,4 @@ if __name__ == '__main__':
     trainer = EMDTrainer(args)
     trainer.setup()
     trainer.train()
+    trainer.test()
