@@ -50,6 +50,7 @@ class EMDTrainer(Trainer):
         args = self.args
         global scale
         scale = args.scale
+        # os.environ["WANDB_MODE"] = "offline"
         wandb.init(
             # set the wandb project where this run will be logged
             project="GeneralizedLoss-Counting",
