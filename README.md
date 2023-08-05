@@ -16,7 +16,7 @@ python preprocess_dataset.py --origin_dir PATH_TO_ORIGIN_DATASET --data_dir PATH
 ### Shanghai Tech
 
 ```bash
-python preprocess_shanghai.py --origin_dir PATH_TO_ORIGIN_DATASET --data_dir PATH_TO_DATASET --part 'A'
+python preprocess_shanghai.py --origin_dir PATH_TO_ORIGIN_DATASET --data_dir PATH_TO_DATASET --part 'A/B'
 ```
 
 [//]: # (The dataset can be constructed followed by [Bayesian Loss]&#40;https://github.com/ZhihengCV/Bayesian-Crowd-Counting&#41;.)
@@ -29,13 +29,13 @@ paper:  mae 84.3, mse 147.5
 ## Test
 
 ```bash
-python test.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT
+python test.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT --dataset "qnrf/sha/shb"
 ```
 
 ## Train
 
 ```bash
-python train.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT
+python train.py --data_dir PATH_TO_DATASET --save_dir PATH_TO_CHECKPOINT --dataset "qnrf/sha/shb" --max_epoch xxx --cost "exp" --extra_aug --scheduler "poly/linear"
 ```
 
 ## Reproduction
@@ -59,7 +59,7 @@ mae: 61.3, mse: 95.4
 | cost | scale | reach | blur  | scaling | tau | p | mae  | mse  |
 |------|-------|-------|-------|---------|-----|---| ---- | ---- |
 | L2  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 73.4685192317753     | 108.96970748752973     |
-| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 66.74143694783305     | 109.95258350982724     |
+| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 66.33975177806812     | 99.13167667544153     |
 
 ### Shanghai-B
 
@@ -67,7 +67,7 @@ mae: 7.3, mse: 11.7
 
 | cost | scale | reach | blur  | scaling | tau | p | mae  | mse  |
 |------|-------|-------|-------|---------|-----|---| ---- | ---- |
-| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 8.249143648751174    | 13.602180548223531     |
+| exp  | 0.6   | 0.5   | 0.01  | 0.5     | 0.1 | 1 | 7.809652856633633    | 13.27623796255063     |
 
 ### Citation
 If you use our code or models in your research, please cite with:
