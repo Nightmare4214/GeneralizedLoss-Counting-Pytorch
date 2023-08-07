@@ -57,7 +57,7 @@ class EMDTrainer(Trainer):
             name = os.path.basename(self.args.save_dir),
             # track hyperparameters and run metadata
             config=args,
-            # resume=True,
+            resume=True if args.resume else None,
             # sync_tensorboard=True
         )
         if args.cost == 'exp':
@@ -100,7 +100,7 @@ class EMDTrainer(Trainer):
                                           batch_size=(self.args.batch_size
                                                       if x == 'train' else 1),
                                           shuffle=(True if x == 'train' else False),
-                                          num_workers=1,
+                                        #   num_workers=1,
                                           pin_memory=(True if x == 'train' else False), drop_last=True)
                             for x in ['train', 'val']}
 
