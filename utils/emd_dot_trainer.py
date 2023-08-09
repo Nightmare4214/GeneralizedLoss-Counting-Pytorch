@@ -274,6 +274,9 @@ class EMDTrainer(Trainer):
                 # points = points[0].type(torch.LongTensor)
                 # res = len(points) - torch.sum(outputs).item()
                 res = points.shape[1] - torch.sum(outputs).item()
+                del inputs
+                del outputs
+                torch.cuda.empty_cache()
                 epoch_res.append(res)
 
         epoch_res = np.array(epoch_res)

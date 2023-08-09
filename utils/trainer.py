@@ -32,7 +32,7 @@ def rename_if_exist(path):
 class Trainer(object):
     def __init__(self, args):
         if os.path.exists(args.resume):
-            self.save_dir = os.path.dirname(self.save_dir)
+            self.save_dir = os.path.dirname(args.resume)
         else:
             self.save_dir = os.path.join(args.save_dir, get_run_name_by_args(args, include_keys) + '_' + datetime.strftime(datetime.now(), '%m%d-%H%M%S'))
         args.save_dir = self.save_dir
