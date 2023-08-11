@@ -121,7 +121,7 @@ class EMDTrainer(Trainer):
                 self.model.load_state_dict(checkpoint['model_state_dict'])
                 self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
                 self.start_epoch = checkpoint['epoch'] + 1
-                if  self.scheduler is not None and 'scheduler' in checkpoint and checkpoint['scheduler'] is not None:
+                if self.scheduler is not None and 'scheduler' in checkpoint and checkpoint['scheduler'] is not None:
                     self.scheduler.load_state_dict(checkpoint['scheduler'])
                 self.best_mae = checkpoint['best_mae']
                 self.best_mse = checkpoint['best_mse']
