@@ -70,6 +70,8 @@ def parse_args():
     parser.add_argument('--downsample_ratio', type=int, default=8,
                         help='downsample ratio')
     parser.add_argument('--extra_aug', default=False, required=False, action='store_true', help='extra_aug')
+    parser.add_argument('--randomless', default=False, required=False, action='store_true', help='randomless')
+    parser.add_argument('--seed', type=int, default=42, help='random seed')
 
     args = parser.parse_args()
     if args.dataset.lower() == 'qnrf':
@@ -88,7 +90,7 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    torch.backends.cudnn.benchmark = True
+    # torch.backends.cudnn.benchmark = True
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device.strip()  # set vis gpu
     trainer = EMDTrainer(args)
     trainer.setup()

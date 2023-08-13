@@ -1,6 +1,7 @@
 import inspect
 import logging
 import os
+import random
 import time
 
 import numpy as np
@@ -20,6 +21,7 @@ from models.vgg import vgg19
 from test import do_test, get_dataloader_by_args
 from utils.cost_functions import ExpCost, PerCost, L2_DIS, PNormCost
 from utils.helper import Save_Handle
+from utils.pytorch_utils import seed_worker, setup_seed
 from utils.trainer import Trainer
 
 print(inspect.getfile(SamplesLoss))
@@ -48,6 +50,14 @@ class EMDTrainer(Trainer):
     def setup(self):
         """initial the datasets, model, loss and optimizer"""
         args = self.args
+        if args.randomless:
+            seed = args.seed
+            g = torch.Generator()
+            g.manual_seed(seed)
+            setup_seed(seed)
+        else:
+            torch.backends.cudnn.benchmark = True
+
         global scale
         scale = args.scale
         # os.environ["WANDB_MODE"] = "offline"
@@ -91,8 +101,9 @@ class EMDTrainer(Trainer):
                                           batch_size=(self.args.batch_size
                                                       if x == 'train' else 1),
                                           shuffle=(True if x == 'train' else False),
-                                        #   num_workers=1,
-                                          pin_memory=(True if x == 'train' else False), drop_last=True)
+                                          num_workers=(2 if x == 'train' else 0),
+                                          pin_memory=(True if x == 'train' else False), drop_last=True,
+                                          worker_init_fn=seed_worker if args.randomless else None, generator=g if args.randomless else None)
                             for x in ['train', 'val']}
 
         self.model = vgg19()
@@ -128,6 +139,10 @@ class EMDTrainer(Trainer):
                 self.best_epoch = checkpoint['best_epoch']
                 if 'wandb_id' in checkpoint:
                     self.wandb_id = checkpoint['wandb_id']
+                if args.randomless:
+                    random.setstate(checkpoint['random_state'])
+                    np.random.set_state(checkpoint['np_random_state'])
+                    torch.random.set_rng_state(checkpoint['torch_random_state'])
             elif suf == '.pth':
                 self.model.load_state_dict(torch.load(args.resume, self.device))
         self.blur = args.blur
@@ -264,7 +279,10 @@ class EMDTrainer(Trainer):
             'best_mae': self.best_mae,
             'best_mse': self.best_mse,
             'best_epoch': self.best_epoch,
-            'wandb_id': self.wandb_id
+            'wandb_id': self.wandb_id,
+            'random_state': random.getstate(),
+            'np_random_state': np.random.get_state(),
+            'torch_random_state': torch.random.get_rng_state()
         }, save_path)
         self.save_list.append(save_path)  # control the number of saved models
 
