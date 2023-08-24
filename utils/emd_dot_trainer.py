@@ -142,7 +142,7 @@ class EMDTrainer(Trainer):
                 if args.randomless:
                     random.setstate(checkpoint['random_state'])
                     np.random.set_state(checkpoint['np_random_state'])
-                    torch.random.set_rng_state(checkpoint['torch_random_state'])
+                    torch.random.set_rng_state(checkpoint['torch_random_state'].cpu())
             elif suf == '.pth':
                 self.model.load_state_dict(torch.load(args.resume, self.device))
         self.blur = args.blur
