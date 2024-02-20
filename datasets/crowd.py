@@ -126,19 +126,20 @@ class Crowd(data.Dataset):
 
     def train_transform_with_crop(self, img, keypoints):
         """random crop image patch and find people in it"""
+        # pillow: first width then height
         wd, ht = img.size
-        # assert len(keypoints) > 0
         if self.extra_aug:
+            # assert len(keypoints) > 0
             if random.random() > 0.88:
                 img = img.convert('L').convert('RGB')
             re_size = random.random() * 0.5 + 0.75
-            wdd = (int)(wd*re_size)
-            htt = (int)(ht*re_size)
+            wdd = (int)(wd * re_size)
+            htt = (int)(ht * re_size)
             if min(wdd, htt) >= self.c_size:
                 wd = wdd
                 ht = htt
                 img = img.resize((wd, ht))
-                keypoints = keypoints*re_size
+                keypoints = keypoints * re_size
         st_size = min(wd, ht)
         if st_size < self.c_size:
             c_size = 512
@@ -165,6 +166,9 @@ class Crowd(data.Dataset):
         target = ratio[mask]
         keypoints = keypoints[mask]
         keypoints = keypoints[:, :2] - [j, i]  # change coodinate
+        idx_mask = (keypoints[:, 0] >= 0) * (keypoints[:, 0] < w) * \
+                       (keypoints[:, 1] >= 0) * (keypoints[:, 1] < h)
+        keypoints = keypoints[idx_mask]
         if len(keypoints) > 0:
             if random.random() > 0.5:
                 img = F.hflip(img)
@@ -216,6 +220,7 @@ class Crowd_sh(data.Dataset):
             return img, keypoints, name
 
     def train_transform(self, img, keypoints):
+        # pillow: first width then height
         wd, ht = img.size
         if self.extra_aug:
             # assert len(keypoints) > 0
@@ -244,8 +249,8 @@ class Crowd_sh(data.Dataset):
         img = F.crop(img, i, j, h, w)
         if len(keypoints) > 0:
             keypoints = keypoints - [j, i]
-            idx_mask = (keypoints[:, 0] >= 0) * (keypoints[:, 0] <= w) * \
-                       (keypoints[:, 1] >= 0) * (keypoints[:, 1] <= h)
+            idx_mask = (keypoints[:, 0] >= 0) * (keypoints[:, 0] < w) * \
+                       (keypoints[:, 1] >= 0) * (keypoints[:, 1] < h)
             keypoints = keypoints[idx_mask]
         else:
             keypoints = np.empty([0, 2])
@@ -272,6 +277,6 @@ class Crowd_sh(data.Dataset):
 
 
 if __name__ == '__main__':
-    dataset = Crowd_sh(os.path.join('/mnt/data/datasets/ShanghaiTech_Crowd_Counting_Dataset-Train-Val-Test/part_A', 'train'), 256, method='train')
+    dataset = Crowd_sh(os.path.join('/home/icml007/Nightmare4214/datasets/ShanghaiTech_Crowd_Counting_Dataset-Train-Val-Test/part_A', 'val'), 256, method='val')
     for x in dataset:
         print(x[1])
